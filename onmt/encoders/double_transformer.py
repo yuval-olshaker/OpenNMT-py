@@ -73,7 +73,10 @@ class DoubleTransformerEncoder(EncoderBase):
                                       with_align=False)
         dec_out = torch.argmax(dec_out, dim=2)
         dec_out.unsqueeze_(-1)
-        enc_state2, memory_bank2, lengths2 = self.second_encoder(dec_out, torch.tensor([dec_out.shape[0], dec_out.shape[1]]))
+        print(dec_out.shape)
+        lengths2 = torch.tensor([dec_out.shape[0], dec_out.shape[1]])
+        print(lengths2)
+        enc_state2, memory_bank2, lengths2 = self.second_encoder(dec_out, lengths2)
         return enc_state2, memory_bank2, lengths2, dec_out
 
 
