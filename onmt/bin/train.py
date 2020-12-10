@@ -163,7 +163,6 @@ def _get_parser():
 
 
 def main():
-    print('sss')
     parser = _get_parser()
 
     opt, unknown = parser.parse_known_args()
