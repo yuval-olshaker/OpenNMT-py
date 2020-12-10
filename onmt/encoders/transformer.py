@@ -45,6 +45,7 @@ class TransformerEncoderLayer(nn.Module):
 
             * outputs ``(batch_size, src_len, model_dim)``
         """
+
         input_norm = self.layer_norm(inputs)
         context, _ = self.self_attn(input_norm, input_norm, input_norm,
                                     mask=mask, attn_type="self")
@@ -91,7 +92,6 @@ class TransformerEncoder(EncoderBase):
     def __init__(self, num_layers, d_model, heads, d_ff, dropout,
                  attention_dropout, embeddings, max_relative_positions):
         super(TransformerEncoder, self).__init__()
-
         self.embeddings = embeddings
         self.transformer = nn.ModuleList(
             [TransformerEncoderLayer(
@@ -114,13 +114,13 @@ class TransformerEncoder(EncoderBase):
             embeddings,
             opt.max_relative_positions)
 
-    def forward(self, src, lengths=None):
+    def forward(self, src, lengths=None, dec_in=None):
         """See :func:`EncoderBase.forward()`"""
         self._check_args(src, lengths)
 
         emb = self.embeddings(src)
-
         out = emb.transpose(0, 1).contiguous()
+
         mask = ~sequence_mask(lengths).unsqueeze(1)
         # Run the forward pass of every layer of the tranformer.
         for layer in self.transformer:
