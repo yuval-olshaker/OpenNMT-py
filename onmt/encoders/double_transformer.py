@@ -76,6 +76,7 @@ class DoubleTransformerEncoder(EncoderBase):
         print(dec_out.shape)
         lengths2 = torch.tensor([dec_out.shape[0], dec_out.shape[1]])
         print(lengths2)
+        lengths2.to('cuda')
         enc_state2, memory_bank2, lengths2 = self.second_encoder(dec_out, lengths2)
         return enc_state2, memory_bank2, lengths2, dec_out
 
