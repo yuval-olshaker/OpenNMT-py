@@ -54,6 +54,7 @@ class DoubleTransformerEncoder(EncoderBase):
         self.decoder = TransformerDecoder.from_opt(opt, tg_embeddings)
         self.second_encoder = TransformerEncoder.from_opt(opt, tg_embeddings)
         self.bptt = False
+        self.counter = 0
 
     @classmethod
     def from_opt(cls, opt, embeddings, tg_embeddings=None):
@@ -76,6 +77,7 @@ class DoubleTransformerEncoder(EncoderBase):
 
         # multiply by weights(t) - to vocab dimensions
         dec_out = torch.tensordot(dec_out, weights.t(), ([2], [0]))
+        dec_out_temp = dec_out
 
         # gumbel softmax - choose the words we want from the vocab
         dec_out = nn.functional.gumbel_softmax(dec_out, tau=0.01, hard=True, dim=2)
@@ -83,10 +85,32 @@ class DoubleTransformerEncoder(EncoderBase):
         # multiply by weights back to embeddings dimensions
         dec_out = torch.tensordot(dec_out, weights, ([2], [0]))
 
+        # check the embeddings every 3000 steps
+        self.counter += 1
+        if self.counter % 3000:
+            temp = self.decoder.embeddings.do_first
+            maxs = torch.argmax(dec_out_temp, dim=2)
+            self.decoder.embeddings.do_first = True
+            emb1 = self.decoder.embeddings(maxs)
+            self.decoder.embeddings.do_first = False
+            emb2 = self.decoder.embeddings(dec_out)
+            self.decoder.embeddings.do_first = temp
+            with open('a.txt', 'a') as wr:
+                wr.write('emb with argmax:\n')
+                wr.write(emb1)
+                wr.write('\n')
+                wr.write('\n')
+                wr.write('our emb:\n')
+                wr.write(emb2)
+                wr.write('\n')
+                wr.write('\n')
+                wr.write('\n')
+                wr.write('\n')
+
         lengths2 = torch.tensor([dec_out.shape[0], dec_out.shape[1]]).to('cuda')
         enc_state2, memory_bank2, lengths2 = self.second_encoder(dec_out, lengths2)
-        return enc_state2, memory_bank2, lengths2, dec_out
 
+        return enc_state2, memory_bank2, lengths2, dec_out
 
     def update_dropout(self, dropout, attention_dropout):
         self.embeddings.update_dropout(dropout)
