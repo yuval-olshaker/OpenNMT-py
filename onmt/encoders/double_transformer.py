@@ -91,7 +91,7 @@ class DoubleTransformerEncoder(EncoderBase):
             temp = self.decoder.embeddings.do_first
             maxs = torch.argmax(dec_out_temp, dim=2)
             self.decoder.embeddings.do_first = True
-            emb1 = self.decoder.embeddings(maxs)
+            emb1 = self.decoder.embeddings(maxs.unsqueeze_(-1))
             self.decoder.embeddings.do_first = False
             emb2 = self.decoder.embeddings(dec_out)
             self.decoder.embeddings.do_first = temp
