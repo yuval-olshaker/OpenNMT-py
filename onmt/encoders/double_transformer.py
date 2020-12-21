@@ -97,11 +97,11 @@ class DoubleTransformerEncoder(EncoderBase):
             self.decoder.embeddings.do_first = temp
             with open('a.txt', 'a') as wr:
                 wr.write('emb with argmax:\n')
-                wr.write(emb1)
+                wr.write(str(emb1))
                 wr.write('\n')
                 wr.write('\n')
                 wr.write('our emb:\n')
-                wr.write(emb2)
+                wr.write(str(emb2))
                 wr.write('\n')
                 wr.write('\n')
                 wr.write('\n')
