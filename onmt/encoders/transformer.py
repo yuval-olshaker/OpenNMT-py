@@ -90,8 +90,9 @@ class TransformerEncoder(EncoderBase):
     """
 
     def __init__(self, num_layers, d_model, heads, d_ff, dropout,
-                 attention_dropout, embeddings, max_relative_positions):
+                 attention_dropout, embeddings, max_relative_positions, is_second):
         super(TransformerEncoder, self).__init__()
+        self.is_second = is_second
         self.embeddings = embeddings
         self.transformer = nn.ModuleList(
             [TransformerEncoderLayer(
@@ -101,7 +102,7 @@ class TransformerEncoder(EncoderBase):
         self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
 
     @classmethod
-    def from_opt(cls, opt, embeddings):
+    def from_opt(cls, opt, embeddings, tg_embeddings=None):
         """Alternate constructor."""
         return cls(
             opt.enc_layers,
@@ -112,11 +113,13 @@ class TransformerEncoder(EncoderBase):
             opt.attention_dropout[0] if type(opt.attention_dropout)
             is list else opt.attention_dropout,
             embeddings,
-            opt.max_relative_positions)
+            opt.max_relative_positions, tg_embeddings is None)
 
     def forward(self, src, lengths=None, dec_in=None):
         """See :func:`EncoderBase.forward()`"""
         self._check_args(src, lengths)
+
+        self.embeddings.do_first = not self.is_second
 
         emb = self.embeddings(src)
         out = emb.transpose(0, 1).contiguous()

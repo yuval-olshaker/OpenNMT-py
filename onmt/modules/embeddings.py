@@ -173,6 +173,8 @@ class Embeddings(nn.Module):
         if freeze_word_vecs:
             self.word_lut.weight.requires_grad = False
 
+        self.do_first = True
+
     def _validate_args(self, feat_merge, feat_vocab_sizes, feat_vec_exponent,
                        feat_vec_size, feat_padding_idx):
         if feat_merge == "sum":
@@ -240,10 +242,11 @@ class Embeddings(nn.Module):
 
         if self.position_encoding:
             for i, module in enumerate(self.make_embedding._modules.values()):
-                if i == len(self.make_embedding._modules.values()) - 1:
-                    source = module(source, step=step)
-                else:
-                    source = module(source)
+                if self.do_first or i > 0:
+                    if i == len(self.make_embedding._modules.values()) - 1:
+                        source = module(source, step=step)
+                    else:
+                        source = module(source)
         else:
             source = self.make_embedding(source)
 

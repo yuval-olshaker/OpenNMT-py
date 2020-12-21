@@ -7,7 +7,6 @@ from onmt.decoders import TransformerDecoder
 from onmt.encoders import TransformerEncoder
 from onmt.encoders.encoder import EncoderBase
 
-
 from torch import Tensor
 import torch.nn.functional as f
 
@@ -51,9 +50,9 @@ class DoubleTransformerEncoder(EncoderBase):
 
     def __init__(self, opt, embeddings, tg_embeddings=None):
         super(DoubleTransformerEncoder, self).__init__()
-        self.first_encoder = TransformerEncoder.from_opt(opt, embeddings)
+        self.first_encoder = TransformerEncoder.from_opt(opt, embeddings, 0)
         self.decoder = TransformerDecoder.from_opt(opt, tg_embeddings)
-        self.second_encoder = TransformerEncoder.from_opt(opt, embeddings)
+        self.second_encoder = TransformerEncoder.from_opt(opt, tg_embeddings)
         self.bptt = False
 
     @classmethod
@@ -71,8 +70,19 @@ class DoubleTransformerEncoder(EncoderBase):
         dec_out, attns = self.decoder(dec_in, memory_bank,
                                       memory_lengths=lengths,
                                       with_align=False)
-        dec_out = torch.argmax(dec_out, dim=2)
-        dec_out.unsqueeze_(-1)
+
+
+        weights = self.decoder.embeddings.word_lut.weight # we need to multiply by the embeddings to C
+
+        # multiply by weights(t) - to vocab dimensions
+        dec_out = torch.tensordot(dec_out, weights.t(), ([2], [0]))
+
+        # gumbel softmax - choose the words we want from the vocab
+        dec_out = nn.functional.gumbel_softmax(dec_out, tau=0.01, hard=True, dim=2)
+
+        # multiply by weights back to embeddings dimensions
+        dec_out = torch.tensordot(dec_out, weights, ([2], [0]))
+
         lengths2 = torch.tensor([dec_out.shape[0], dec_out.shape[1]]).to('cuda')
         enc_state2, memory_bank2, lengths2 = self.second_encoder(dec_out, lengths2)
         return enc_state2, memory_bank2, lengths2, dec_out
