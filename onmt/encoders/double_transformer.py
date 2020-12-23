@@ -10,7 +10,7 @@ from onmt.encoders.encoder import EncoderBase
 from torch import Tensor
 import torch.nn.functional as f
 
-
+from datetime import datetime
 import torch.nn as nn
 
 from onmt.encoders.encoder import EncoderBase
@@ -87,28 +87,42 @@ class DoubleTransformerEncoder(EncoderBase):
         dec_out = torch.tensordot(dec_out, weights, ([2], [0]))
 
         # check the embeddings every 10 steps
-        self.counter += 1
-        if self.prints and self.counter % 10 == 0:
-            temp = self.decoder.embeddings.do_first
-            maxs = torch.argmax(dec_out_temp, dim=2)
-            self.decoder.embeddings.do_first = True
-            emb1 = self.decoder.embeddings(maxs.unsqueeze_(-1))
-            self.decoder.embeddings.do_first = False
-            emb2 = self.decoder.embeddings(dec_out)
-            self.decoder.embeddings.do_first = temp
-            with open('a.txt', 'a') as wr:
-                wr.write('emb with argmax:\n')
-                wr.write(str(emb1))
-                wr.write('\n')
-                wr.write('\n')
-                wr.write('our emb:\n')
-                wr.write(str(emb2))
-                wr.write('\n')
-                wr.write('\n')
-                wr.write('\n')
-                wr.write('\n')
+        # self.counter += 1
+        # if self.prints and self.counter % 10 == 0:
+        #     temp = self.decoder.embeddings.do_first
+        #     maxs = torch.argmax(dec_out_temp, dim=2)
+        #     self.decoder.embeddings.do_first = True
+        #     emb1 = self.decoder.embeddings(maxs.unsqueeze_(-1))
+        #     self.decoder.embeddings.do_first = False
+        #     emb2 = self.decoder.embeddings(dec_out)
+        #     self.decoder.embeddings.do_first = temp
+        #     with open('a.txt', 'a') as wr:
+        #         wr.write('emb with argmax:\n')
+        #         wr.write(str(emb1))
+        #         wr.write('\n')
+        #         wr.write('\n')
+        #         wr.write('our emb:\n')
+        #         wr.write(str(emb2))
+        #         wr.write('\n')
+        #         wr.write('\n')
+        #         wr.write('\n')
+        #         wr.write('\n')
 
         lengths2 = torch.tensor([dec_out.shape[0], dec_out.shape[1]]).to('cuda')
+        with open('a.txt', 'a') as wr:
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
+            wr.write("Current Time = " + str(current_time) + '\n')
+            wr.write('dec_out.shape:\n')
+            wr.write(str(dec_out.shape))
+            wr.write('\n')
+            wr.write('\n')
+            wr.write('lengths2:\n')
+            wr.write(str(lengths2))
+            wr.write('\n')
+            wr.write('\n')
+            wr.write('\n')
+            wr.write('\n')
         enc_state2, memory_bank2, lengths2 = self.second_encoder(dec_out, lengths2)
 
         return enc_state2, memory_bank2, lengths2, dec_out
