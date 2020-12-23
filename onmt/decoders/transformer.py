@@ -288,6 +288,7 @@ class TransformerDecoder(DecoderBase):
 
     def forward(self, tgt, memory_bank, step=None, **kwargs):
         """Decode, possibly stepwise."""
+        self.embeddings.do_first = True
         if step == 0:
             self._init_cache(memory_bank)
 

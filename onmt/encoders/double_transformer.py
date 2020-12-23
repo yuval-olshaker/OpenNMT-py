@@ -55,7 +55,6 @@ class DoubleTransformerEncoder(EncoderBase):
         self.second_encoder = TransformerEncoder.from_opt(opt, tg_embeddings)
         self.bptt = False
         self.counter = 0
-        self.prints = True
 
     @classmethod
     def from_opt(cls, opt, embeddings, tg_embeddings=None):
@@ -65,7 +64,6 @@ class DoubleTransformerEncoder(EncoderBase):
 
     def forward(self, src, lengths=None, dec_in=None, bptt=False):
         """See :func:`EncoderBase.forward()`"""
-        a = lengths
         enc_state, memory_bank, lengths = self.first_encoder(src, lengths)
         if self.bptt is False:
             self.decoder.init_state(src, memory_bank, enc_state)
@@ -73,67 +71,20 @@ class DoubleTransformerEncoder(EncoderBase):
         dec_out, attns = self.decoder(dec_in, memory_bank,
                                       memory_lengths=lengths,
                                       with_align=False)
-
-
         weights = self.decoder.embeddings.word_lut.weight # we need to multiply by the embeddings to C
 
         # multiply by weights(t) - to vocab dimensions
         dec_out = torch.tensordot(dec_out, weights.t(), ([2], [0]))
-
         # gumbel softmax - choose the words we want from the vocab
         dec_out = nn.functional.gumbel_softmax(dec_out, tau=0.01, hard=True, dim=2)
-        dec_out_temp = dec_out
-
         # multiply by weights back to embeddings dimensions
         dec_out = torch.tensordot(dec_out, weights, ([2], [0]))
-
-        # check the embeddings every 10 steps
-        # self.counter += 1
-        # if self.prints and self.counter % 10 == 0:
-        #     temp = self.decoder.embeddings.do_first
-        #     maxs = torch.argmax(dec_out_temp, dim=2)
-        #     self.decoder.embeddings.do_first = True
-        #     emb1 = self.decoder.embeddings(maxs.unsqueeze_(-1))
-        #     self.decoder.embeddings.do_first = False
-        #     emb2 = self.decoder.embeddings(dec_out)
-        #     self.decoder.embeddings.do_first = temp
-        #     with open('a.txt', 'a') as wr:
-        #         wr.write('emb with argmax:\n')
-        #         wr.write(str(emb1))
-        #         wr.write('\n')
-        #         wr.write('\n')
-        #         wr.write('our emb:\n')
-        #         wr.write(str(emb2))
-        #         wr.write('\n')
-        #         wr.write('\n')
-        #         wr.write('\n')
-        #         wr.write('\n')
 
         # lengths2 = (torch.ones(dec_out.shape[1]) * dec_out.shape[0]).long().to('cuda')
         # only 1 size batch
         lengths2 = torch.tensor([dec_out.shape[0]]).to('cuda')
-        # with open('a.txt', 'a') as wr:
-        #     now = datetime.now()
-        #     current_time = now.strftime("%H:%M:%S")
-        #     wr.write("Current Time = " + str(current_time) + '\n')
-        #     wr.write('shape:\n')
-        #     wr.write(str(dec_out.shape))
-        #     wr.write('\n')
-        #     wr.write(str(src.shape))
-        #     wr.write('\n')
-        #     wr.write('\n')
-        #     wr.write('lengths:\n')
-        #     wr.write(str(lengths2))
-        #     wr.write('\n')
-        #     wr.write(str(a))
-        #     wr.write('\n')
-        #     wr.write('\n')
-        #     wr.write(str(src))
-        #     wr.write('\n')
-        #     wr.write('\n')
 
         enc_state2, memory_bank2, lengths2 = self.second_encoder(dec_out, lengths2)
-
         return enc_state2, memory_bank2, lengths2, dec_out
 
     def update_dropout(self, dropout, attention_dropout):

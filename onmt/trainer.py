@@ -16,8 +16,6 @@ import onmt.utils
 from onmt.translate import translator
 from onmt.utils.logging import logger
 
-patience = 3 # 3 seems to be enough
-
 def build_trainer(opt, device_id, model, fields, optim, model_saver=None):
     """
     Simplify `Trainer` creation based on user `opt`s*
@@ -76,9 +74,8 @@ def build_trainer(opt, device_id, model, fields, optim, model_saver=None):
     return trainer
 
 
-def finish_training(train_steps, step, num_of_validation_since_best):
-    # we finish when the patience is covered
-    return 0 < train_steps <= step or num_of_validation_since_best >= patience
+def finish_training(train_steps, step):
+    return 0 < train_steps <= step
 
 
 class Trainer(object):
@@ -269,7 +266,6 @@ class Trainer(object):
                     logger.info('GpuRank %d: gather valid stat \
                                 step %d' % (self.gpu_rank, step))
                 valid_stats = self._maybe_gather_stats(valid_stats)
-                self.update_valid_stop_cond_stats(valid_stats)
                 if self.gpu_verbose_level > 0:
                     logger.info('GpuRank %d: report stat step %d'
                                 % (self.gpu_rank, step))
@@ -287,7 +283,7 @@ class Trainer(object):
                          and step % save_checkpoint_steps == 0)):
                 self.model_saver.save(step, moving_average=self.moving_average)
 
-            if finish_training(train_steps, step, self.num_of_validation_since_best):
+            if finish_training(train_steps, step):
                 break
 
         if self.model_saver is not None:
@@ -324,10 +320,8 @@ class Trainer(object):
 
                 with torch.cuda.amp.autocast(enabled=self.optim.amp):
                     # F-prop through the model.
-                    valid_model.prints = False
                     outputs, attns = valid_model(src, tgt, src_lengths,
                                                  with_align=self.with_align)
-                    valid_model.prints = True
                     # Compute loss.
                     _, batch_stats = self.valid_loss(batch, outputs, attns)
 
@@ -482,20 +476,3 @@ class Trainer(object):
                 else self.earlystopper.current_tolerance,
                 step, train_stats=train_stats,
                 valid_stats=valid_stats)
-
-    def update_valid_stop_cond_stats(self, valid_stats):
-        # if this validation is better than the best one - it replaces it.
-        # better means better acc (higher)
-        if self.best_validation_stats is None:
-            self.num_of_validation_since_best = 0
-            self.best_validation_stats = valid_stats
-            logger.info('trying_to_save')
-            self.model_saver.save(0)
-        else:
-            if valid_stats.ppl() > self.best_validation_stats.ppl():
-                self.num_of_validation_since_best += 1
-            else:
-                self.num_of_validation_since_best = 0
-                self.best_validation_stats = valid_stats
-                logger.info('trying_to_save')
-                self.model_saver.save(0)
