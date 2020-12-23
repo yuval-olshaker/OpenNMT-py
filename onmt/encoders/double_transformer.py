@@ -65,6 +65,7 @@ class DoubleTransformerEncoder(EncoderBase):
 
     def forward(self, src, lengths=None, dec_in=None, bptt=False):
         """See :func:`EncoderBase.forward()`"""
+        a = lengths
         enc_state, memory_bank, lengths = self.first_encoder(src, lengths)
         if self.bptt is False:
             self.decoder.init_state(src, memory_bank, enc_state)
@@ -113,16 +114,17 @@ class DoubleTransformerEncoder(EncoderBase):
             now = datetime.now()
             current_time = now.strftime("%H:%M:%S")
             wr.write("Current Time = " + str(current_time) + '\n')
-            wr.write('dec_out.shape:\n')
+            wr.write('shape:\n')
             wr.write(str(dec_out.shape))
+            wr.write(str(src.shape))
             wr.write('\n')
             wr.write('\n')
-            wr.write('lengths2:\n')
+            wr.write('lengths:\n')
             wr.write(str(lengths2))
+            wr.write(str(a))
             wr.write('\n')
             wr.write('\n')
-            wr.write('\n')
-            wr.write('\n')
+
         enc_state2, memory_bank2, lengths2 = self.second_encoder(dec_out, lengths2)
 
         return enc_state2, memory_bank2, lengths2, dec_out
