@@ -55,6 +55,7 @@ class DoubleTransformerEncoder(EncoderBase):
         self.second_encoder = TransformerEncoder.from_opt(opt, tg_embeddings)
         self.bptt = False
         self.counter = 0
+        self.prints = True
 
     @classmethod
     def from_opt(cls, opt, embeddings, tg_embeddings=None):
@@ -87,7 +88,7 @@ class DoubleTransformerEncoder(EncoderBase):
 
         # check the embeddings every 10 steps
         self.counter += 1
-        if self.counter % 10:
+        if self.prints and self.counter % 10 == 0:
             temp = self.decoder.embeddings.do_first
             maxs = torch.argmax(dec_out_temp, dim=2)
             self.decoder.embeddings.do_first = True
