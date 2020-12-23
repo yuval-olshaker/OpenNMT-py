@@ -77,17 +77,17 @@ class DoubleTransformerEncoder(EncoderBase):
 
         # multiply by weights(t) - to vocab dimensions
         dec_out = torch.tensordot(dec_out, weights.t(), ([2], [0]))
-        dec_out_temp = dec_out
 
         # gumbel softmax - choose the words we want from the vocab
         dec_out = nn.functional.gumbel_softmax(dec_out, tau=0.01, hard=True, dim=2)
+        dec_out_temp = dec_out
 
         # multiply by weights back to embeddings dimensions
         dec_out = torch.tensordot(dec_out, weights, ([2], [0]))
 
-        # check the embeddings every 3000 steps
+        # check the embeddings every 10 steps
         self.counter += 1
-        if self.counter % 3000:
+        if self.counter % 10:
             temp = self.decoder.embeddings.do_first
             maxs = torch.argmax(dec_out_temp, dim=2)
             self.decoder.embeddings.do_first = True
