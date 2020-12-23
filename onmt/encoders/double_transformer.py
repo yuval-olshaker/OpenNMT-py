@@ -109,7 +109,9 @@ class DoubleTransformerEncoder(EncoderBase):
         #         wr.write('\n')
         #         wr.write('\n')
 
-        lengths2 = (torch.ones(dec_out.shape[1]) * dec_out.shape[0]).long().to('cuda')
+        # lengths2 = (torch.ones(dec_out.shape[1]) * dec_out.shape[0]).long().to('cuda')
+        # only 1 size batch
+        lengths2 = torch.tensor([dec_out.shape[0]]).to('cuda')
         # with open('a.txt', 'a') as wr:
         #     now = datetime.now()
         #     current_time = now.strftime("%H:%M:%S")
