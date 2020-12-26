@@ -157,6 +157,8 @@ class LossComputeBase(nn.Module):
         if trunc_size is None:
             trunc_size = batch.tgt.size(0) - trunc_start
         trunc_range = (trunc_start, trunc_start + trunc_size)
+        print('half in')
+        print(output.shape)
         shard_state = self._make_shard_state(batch, output, trunc_range, attns)
         if shard_size == 0:
             loss, stats = self._compute_loss(batch, **shard_state)
@@ -291,6 +293,7 @@ class NMTLossCompute(LossComputeBase):
         self.criterion.first_output_scores = self.generator(self._bottle(self.first_output))
         gtruth = target.view(-1)
         print('scores in ')
+        print(scores.shape)
         loss = self.criterion(scores, gtruth)
         if self.lambda_coverage != 0.0:
             coverage_loss = self._compute_coverage_loss(
