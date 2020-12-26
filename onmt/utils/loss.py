@@ -283,13 +283,14 @@ class NMTLossCompute(LossComputeBase):
 
     def _compute_loss(self, batch, output, target, std_attn=None,
                       coverage_attn=None, align_head=None, ref_align=None):
-
+        print('output in ')
+        print(output.shape)
         bottled_output = self._bottle(output)
 
         scores = self.generator(bottled_output)
         self.criterion.first_output_scores = self.generator(self._bottle(self.first_output))
         gtruth = target.view(-1)
-
+        print('scores in ')
         loss = self.criterion(scores, gtruth)
         if self.lambda_coverage != 0.0:
             coverage_loss = self._compute_coverage_loss(
