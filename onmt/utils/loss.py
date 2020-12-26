@@ -164,7 +164,7 @@ class LossComputeBase(nn.Module):
         batch_stats = onmt.utils.Statistics()
         for shard in shards(shard_state, shard_size):
             loss, stats = self._compute_loss(batch, **shard)
-            loss.div(float(normalization)).backward()
+            loss.div(float(normalization)).backward(retain_graph=True)
             batch_stats.update(stats)
         return None, batch_stats
 
@@ -217,8 +217,8 @@ class LabelSmoothingLoss(nn.Module):
         model_prob = self.one_hot.repeat(target.size(0), 1)
         model_prob.scatter_(1, target.unsqueeze(1), self.confidence)
         model_prob.masked_fill_((target == self.ignore_index).unsqueeze(1), 0)
-
-        return F.kl_div(output, model_prob, reduction='sum')
+        return F.kl_div(output, model_prob, reduction='sum') +\
+               F.kl_div(self.first_output_scores, model_prob, reduction='sum')
 
 
 class NMTLossCompute(LossComputeBase):
@@ -281,6 +281,7 @@ class NMTLossCompute(LossComputeBase):
         bottled_output = self._bottle(output)
 
         scores = self.generator(bottled_output)
+        self.criterion.first_output_scores = self.generator(self._bottle(self.first_output))
         gtruth = target.view(-1)
 
         loss = self.criterion(scores, gtruth)

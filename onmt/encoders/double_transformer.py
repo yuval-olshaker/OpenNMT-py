@@ -68,13 +68,13 @@ class DoubleTransformerEncoder(EncoderBase):
         if self.bptt is False:
             self.decoder.init_state(src, memory_bank, enc_state)
 
-        dec_out, attns = self.decoder(dec_in, memory_bank,
+        dec_out1, attns = self.decoder(dec_in, memory_bank,
                                       memory_lengths=lengths,
                                       with_align=False)
         weights = self.decoder.embeddings.word_lut.weight # we need to multiply by the embeddings to C
 
         # multiply by weights(t) - to vocab dimensions
-        dec_out = torch.tensordot(dec_out, weights.t(), ([2], [0]))
+        dec_out = torch.tensordot(dec_out1, weights.t(), ([2], [0]))
         # gumbel softmax - choose the words we want from the vocab
         dec_out = nn.functional.gumbel_softmax(dec_out, tau=0.01, hard=True, dim=2)
         # multiply by weights back to embeddings dimensions
@@ -85,7 +85,8 @@ class DoubleTransformerEncoder(EncoderBase):
         lengths2 = torch.tensor([dec_out.shape[0]]).to('cuda')
 
         enc_state2, memory_bank2, lengths2 = self.second_encoder(dec_out, lengths2)
-        return enc_state2, memory_bank2, lengths2, dec_out
+
+        return enc_state2, memory_bank2, lengths2, dec_out, dec_out1, attns
 
     def update_dropout(self, dropout, attention_dropout):
         self.embeddings.update_dropout(dropout)
