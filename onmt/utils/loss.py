@@ -217,6 +217,9 @@ class LabelSmoothingLoss(nn.Module):
         model_prob = self.one_hot.repeat(target.size(0), 1)
         model_prob.scatter_(1, target.unsqueeze(1), self.confidence)
         model_prob.masked_fill_((target == self.ignore_index).unsqueeze(1), 0)
+        print(self.first_output_scores.shape)
+        print(output.shape)
+        print(model_prob.shape)
         return F.kl_div(output, model_prob, reduction='sum') +\
                F.kl_div(self.first_output_scores, model_prob, reduction='sum')
 
