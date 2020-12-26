@@ -375,9 +375,9 @@ class Trainer(object):
                     # 3. Compute loss.
                     print('outputs.shape')
                     print(outputs.shape)
+                    self.train_loss.first_output = first_dec_out
                     print('self.train_loss.first_output')
                     print(self.train_loss.first_output)
-                    self.train_loss.first_output = first_dec_out
                     loss, batch_stats = self.train_loss(
                         batch,
                         outputs,
