@@ -160,6 +160,8 @@ class LossComputeBase(nn.Module):
         print('half in')
         print(output.shape)
         shard_state = self._make_shard_state(batch, output, trunc_range, attns)
+        print('more in')
+        print(output.shape)
         if shard_size == 0:
             loss, stats = self._compute_loss(batch, **shard_state)
             return loss / float(normalization), stats
