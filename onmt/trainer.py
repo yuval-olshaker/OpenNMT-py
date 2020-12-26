@@ -323,7 +323,7 @@ class Trainer(object):
                     outputs, attns, first_dec_out, first_dec_attns = valid_model(src, tgt, src_lengths,
                                                  with_align=self.with_align)
                     # Compute loss.
-                    self.valid_loss.first_output = first_dec_out
+                    _, _ = self.valid_loss(batch, first_dec_out, first_dec_attns)
                     _, batch_stats = self.valid_loss(batch, outputs, attns)
 
                 # Update statistics.
@@ -373,11 +373,14 @@ class Trainer(object):
                         with_align=self.with_align)
                     bptt = True
                     # 3. Compute loss.
-                    print('outputs.shape')
-                    print(outputs.shape)
-                    self.train_loss.first_output = first_dec_out
-                    print('self.train_loss.first_output')
-                    print(self.train_loss.first_output.shape)
+                    _, _ = self.train_loss(
+                        batch,
+                        first_dec_out,
+                        first_dec_attns,
+                        normalization=normalization,
+                        shard_size=self.shard_size,
+                        trunc_start=j,
+                        trunc_size=trunc_size)
                     loss, batch_stats = self.train_loss(
                         batch,
                         outputs,

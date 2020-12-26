@@ -157,11 +157,7 @@ class LossComputeBase(nn.Module):
         if trunc_size is None:
             trunc_size = batch.tgt.size(0) - trunc_start
         trunc_range = (trunc_start, trunc_start + trunc_size)
-        print('half in')
-        print(output.shape)
         shard_state = self._make_shard_state(batch, output, trunc_range, attns)
-        print('more in')
-        print(output.shape)
         if shard_size == 0:
             loss, stats = self._compute_loss(batch, **shard_state)
             return loss / float(normalization), stats
@@ -221,14 +217,7 @@ class LabelSmoothingLoss(nn.Module):
         model_prob = self.one_hot.repeat(target.size(0), 1)
         model_prob.scatter_(1, target.unsqueeze(1), self.confidence)
         model_prob.masked_fill_((target == self.ignore_index).unsqueeze(1), 0)
-        print('self.first_output_scores.shape')
-        print(self.first_output_scores.shape)
-        print('output.shape')
-        print(output.shape)
-        print('model_prob.shape')
-        print(model_prob.shape)
-        return F.kl_div(output, model_prob, reduction='sum') +\
-               F.kl_div(self.first_output_scores, model_prob, reduction='sum')
+        return F.kl_div(output, model_prob, reduction='sum')
 
 
 class NMTLossCompute(LossComputeBase):
@@ -287,15 +276,10 @@ class NMTLossCompute(LossComputeBase):
 
     def _compute_loss(self, batch, output, target, std_attn=None,
                       coverage_attn=None, align_head=None, ref_align=None):
-        print('output in ')
-        print(output.shape)
         bottled_output = self._bottle(output)
 
         scores = self.generator(bottled_output)
-        self.criterion.first_output_scores = self.generator(self._bottle(self.first_output))
         gtruth = target.view(-1)
-        print('scores in ')
-        print(scores.shape)
         loss = self.criterion(scores, gtruth)
         if self.lambda_coverage != 0.0:
             coverage_loss = self._compute_coverage_loss(
@@ -391,4 +375,4 @@ def shards(state, shard_size, eval_only=False):
                 variables.extend(zip(torch.split(state[k], shard_size),
                                      [v_chunk.grad for v_chunk in v_split]))
         inputs, grads = zip(*variables)
-        torch.autograd.backward(inputs, grads)
+        torch.autograd.backward(inputs, grads, retain_graph=True)
