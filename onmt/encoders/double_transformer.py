@@ -71,6 +71,7 @@ class DoubleTransformerEncoder(EncoderBase):
         dec_out1, attns = self.decoder(dec_in, memory_bank,
                                       memory_lengths=lengths,
                                       with_align=False)
+        print('dec_out1.shape')
         print(dec_out1.shape)
         weights = self.decoder.embeddings.word_lut.weight # we need to multiply by the embeddings to C
 

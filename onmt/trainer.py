@@ -373,6 +373,10 @@ class Trainer(object):
                         with_align=self.with_align)
                     bptt = True
                     # 3. Compute loss.
+                    print('outputs.shape')
+                    print(outputs.shape)
+                    print('self.train_loss.first_output')
+                    print(self.train_loss.first_output)
                     self.train_loss.first_output = first_dec_out
                     loss, batch_stats = self.train_loss(
                         batch,
