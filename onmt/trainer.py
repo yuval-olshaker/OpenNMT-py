@@ -139,6 +139,7 @@ class Trainer(object):
         self.dropout = dropout
         self.dropout_steps = dropout_steps
 
+        self.double_loss = True # compute loss twice - also on the first part
         for i in range(len(self.accum_count_l)):
             assert self.accum_count_l[i] > 0
             if self.accum_count_l[i] > 1:
@@ -323,7 +324,8 @@ class Trainer(object):
                     outputs, attns, first_dec_out, first_dec_attns = valid_model(src, tgt, src_lengths,
                                                  with_align=self.with_align)
                     # Compute loss.
-                    _, _ = self.valid_loss(batch, first_dec_out, first_dec_attns)
+                    if self.double_loss:
+                        _, _ = self.valid_loss(batch, first_dec_out, first_dec_attns)
                     _, batch_stats = self.valid_loss(batch, outputs, attns)
 
                 # Update statistics.
@@ -373,14 +375,15 @@ class Trainer(object):
                         with_align=self.with_align)
                     bptt = True
                     # 3. Compute loss.
-                    _, _ = self.train_loss(
-                        batch,
-                        first_dec_out,
-                        first_dec_attns,
-                        normalization=normalization,
-                        shard_size=self.shard_size,
-                        trunc_start=j,
-                        trunc_size=trunc_size)
+                    if self.double_loss:
+                        _, _ = self.train_loss(
+                            batch,
+                            first_dec_out,
+                            first_dec_attns,
+                            normalization=normalization,
+                            shard_size=self.shard_size,
+                            trunc_start=j,
+                            trunc_size=trunc_size)
                     loss, batch_stats = self.train_loss(
                         batch,
                         outputs,

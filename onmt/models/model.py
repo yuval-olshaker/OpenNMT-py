@@ -17,6 +17,7 @@ class NMTModel(nn.Module):
         super(NMTModel, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
+        self.use_special_teacher_forcing = False
 
     def forward(self, src, tgt, lengths, bptt=False, with_align=False):
         """Forward propagate a `src` and `tgt` pair for training.
@@ -45,6 +46,8 @@ class NMTModel(nn.Module):
         enc_state, memory_bank, lengths, second_src, first_dec_out, first_dec_attns = self.encoder(src, lengths, dec_in=dec_in, bptt=bptt)
         if bptt is False:
             self.decoder.init_state(second_src, memory_bank, enc_state)
+        if self.use_special_teacher_forcing:
+            dec_in = torch.argmax(first_dec_out, 2).unsqueeze(-1)
         dec_out, attns = self.decoder(dec_in, memory_bank,
                                       memory_lengths=lengths,
                                       with_align=with_align)
