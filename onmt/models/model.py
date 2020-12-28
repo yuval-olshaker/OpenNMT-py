@@ -17,7 +17,7 @@ class NMTModel(nn.Module):
         super(NMTModel, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
-        self.use_special_teacher_forcing = False
+        self.use_special_teacher_forcing = True
 
     def forward(self, src, tgt, lengths, bptt=False, with_align=False):
         """Forward propagate a `src` and `tgt` pair for training.
