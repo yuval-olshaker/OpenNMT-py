@@ -139,7 +139,7 @@ class Trainer(object):
         self.dropout = dropout
         self.dropout_steps = dropout_steps
 
-        self.double_loss = True # compute loss twice - also on the first part
+        self.double_loss = False # compute loss twice - also on the first part
         for i in range(len(self.accum_count_l)):
             assert self.accum_count_l[i] > 0
             if self.accum_count_l[i] > 1:
