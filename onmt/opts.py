@@ -56,8 +56,6 @@ def _add_logging_opts(parser, is_train=True):
                        "decoded sentences")
 
         group.add('--first_stage', '-first_stage', type=int, default=0, help='Use transformers first stage')
-        group.add('--double_transformer', '-double_transformer', type=int, default=1,
-                  help='use double transformer model')
 
 
 def _add_reproducibility_opts(parser):

@@ -63,10 +63,8 @@ def build_encoder(opt, embeddings, tg_embeddings=None):
         embeddings (Embeddings): vocab embeddings for this encoder.
     """
     enc_type = opt.encoder_type if opt.model_type == "text" else opt.model_type
-    if opt.double_transformer == 1:
-        return DoubleTransformerEncoder.from_opt(opt, embeddings, tg_embeddings)
-    else:
-        return str2enc[enc_type].from_opt(opt, embeddings)
+    return DoubleTransformerEncoder.from_opt(opt, embeddings, tg_embeddings)
+    # return str2enc[enc_type].from_opt(opt, embeddings)
 
 
 
