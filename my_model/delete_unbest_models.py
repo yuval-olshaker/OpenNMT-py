@@ -1,12 +1,12 @@
 import os
 import sys
 
-if len(sys.argv) < 2:
+if len(sys.argv) < 3:
     exit(1)
 print(sys.argv)
-exit(0)
-exp_num = sys.argv[0]
-best_model_num = sys.argv[1]
+
+exp_num = sys.argv[1]
+best_model_num = sys.argv[2]
 
 base_path = '/home/ubuntu/wasm_decompiler/Codenator/try_' + exp_num + '/models/'
 saved_models = os.listdir(base_path)
