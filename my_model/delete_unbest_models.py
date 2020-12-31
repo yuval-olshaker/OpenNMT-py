@@ -3,7 +3,6 @@ import sys
 
 if len(sys.argv) < 3:
     exit(1)
-print(sys.argv)
 
 exp_num = sys.argv[1]
 best_model_num = sys.argv[2]
