@@ -326,7 +326,7 @@ class Trainer(object):
                     # Compute loss.
                     if self.double_loss:
                         _, _ = self.valid_loss(batch, first_dec_out, first_dec_attns)
-                    self.train_loss.first_output = first_dec_out
+                    self.valid_loss.first_output = first_dec_out
                     _, batch_stats = self.valid_loss(batch, outputs, attns)
 
                 # Update statistics.
