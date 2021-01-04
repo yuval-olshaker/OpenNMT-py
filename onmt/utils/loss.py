@@ -280,7 +280,7 @@ class NMTLossCompute(LossComputeBase):
 
         scores = self.generator(bottled_output)
         gtruth = target.view(-1)
-        loss = self.criterion(scores, gtruth)
+        loss = self.criterion(scores, gtruth) + self.criterion(self.generator(self._bottle(self.first_output)), gtruth)
         if self.lambda_coverage != 0.0:
             coverage_loss = self._compute_coverage_loss(
                 std_attn=std_attn, coverage_attn=coverage_attn)

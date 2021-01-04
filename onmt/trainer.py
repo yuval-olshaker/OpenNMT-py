@@ -139,7 +139,7 @@ class Trainer(object):
         self.dropout = dropout
         self.dropout_steps = dropout_steps
 
-        self.double_loss = True # compute loss twice - also on the first part
+        self.double_loss = False # compute loss twice - also on the first part
         for i in range(len(self.accum_count_l)):
             assert self.accum_count_l[i] > 0
             if self.accum_count_l[i] > 1:
@@ -326,6 +326,7 @@ class Trainer(object):
                     # Compute loss.
                     if self.double_loss:
                         _, _ = self.valid_loss(batch, first_dec_out, first_dec_attns)
+                    self.train_loss.first_output = first_dec_out
                     _, batch_stats = self.valid_loss(batch, outputs, attns)
 
                 # Update statistics.
@@ -384,6 +385,7 @@ class Trainer(object):
                             shard_size=self.shard_size,
                             trunc_start=j,
                             trunc_size=trunc_size)
+                    self.train_loss.first_output = first_dec_out
                     loss, batch_stats = self.train_loss(
                         batch,
                         outputs,
