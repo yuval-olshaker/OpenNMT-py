@@ -120,7 +120,7 @@ class Trainer(object):
         self.valid_loss = valid_loss
         self.optim = optim
         self.trunc_size = trunc_size
-        self.shard_size = shard_size
+        self.shard_size = 0 # we put 0 because the batch is 1 and we do not need it - shard_size
         self.norm_method = norm_method
         self.accum_count_l = accum_count
         self.accum_count = accum_count[0]
@@ -139,7 +139,7 @@ class Trainer(object):
         self.dropout = dropout
         self.dropout_steps = dropout_steps
 
-        self.double_loss = False # compute loss twice - also on the first part
+        self.double_loss = True # compute loss twice - also on the first part
         for i in range(len(self.accum_count_l)):
             assert self.accum_count_l[i] > 0
             if self.accum_count_l[i] > 1:
@@ -325,8 +325,8 @@ class Trainer(object):
                                                  with_align=self.with_align)
                     # Compute loss.
                     if self.double_loss:
-                        _, _ = self.valid_loss(batch, first_dec_out, first_dec_attns)
-                    self.valid_loss.first_output = first_dec_out
+                        _, first_stats = self.valid_loss(batch, first_dec_out, first_dec_attns)
+                        stats.update(first_stats)
                     _, batch_stats = self.valid_loss(batch, outputs, attns)
 
                 # Update statistics.
@@ -377,7 +377,7 @@ class Trainer(object):
                     bptt = True
                     # 3. Compute loss.
                     if self.double_loss:
-                        _, _ = self.train_loss(
+                        first_loss, first_stats = self.train_loss(
                             batch,
                             first_dec_out,
                             first_dec_attns,
@@ -385,7 +385,6 @@ class Trainer(object):
                             shard_size=self.shard_size,
                             trunc_start=j,
                             trunc_size=trunc_size)
-                    self.train_loss.first_output = first_dec_out
                     loss, batch_stats = self.train_loss(
                         batch,
                         outputs,
@@ -394,6 +393,9 @@ class Trainer(object):
                         shard_size=self.shard_size,
                         trunc_start=j,
                         trunc_size=trunc_size)
+                    if self.double_loss:
+                        loss = loss + first_loss
+                        batch_stats.update(first_stats)
 
                 try:
                     if loss is not None:
